@@ -27,7 +27,8 @@ ENV CARGO_INCREMENTAL=$CARGO_INCREMENTAL \
     PACKAGE=$PACKAGE \
     PBS_TARGET=$PBS_TARGET \
     PBS_DATE=$PBS_DATE \
-    PBS_VERSION=$PBS_VERSION
+    PBS_VERSION=$PBS_VERSION \
+    JEMALLOC_SYS_WITH_LG_PAGE=16
 
 # obtain python-build-standalone and configure PYO3_CONFIG_FILE
 COPY .circleci /influxdb3/.circleci
