@@ -17,9 +17,9 @@ ARG CARGO_NET_GIT_FETCH_WITH_CLI=false
 ARG PROFILE=release
 ARG FEATURES=aws,gcp,azure,jemalloc_replacing_malloc
 ARG PACKAGE=influxdb3
-ARG PBS_DATE=unset
-ARG PBS_VERSION=unset
-ARG PBS_TARGET=unset
+ARG PBS_DATE=20251209
+ARG PBS_VERSION=3.10.19
+ARG PBS_TARGET=aarch64-unknown-linux-gnu
 ENV CARGO_INCREMENTAL=$CARGO_INCREMENTAL \
     CARGO_NET_GIT_FETCH_WITH_CLI=$CARGO_NET_GIT_FETCH_WITH_CLI \
     PROFILE=$PROFILE \
@@ -27,18 +27,21 @@ ENV CARGO_INCREMENTAL=$CARGO_INCREMENTAL \
     PACKAGE=$PACKAGE \
     PBS_TARGET=$PBS_TARGET \
     PBS_DATE=$PBS_DATE \
-    PBS_VERSION=$PBS_VERSION
+    PBS_VERSION=$PBS_VERSION \
+    JEMALLOC_SYS_WITH_LG_PAGE=16
 
 # obtain python-build-standalone and configure PYO3_CONFIG_FILE
 COPY .circleci /influxdb3/.circleci
 RUN \
-  sed -i "s/^readonly TARGETS=.*/readonly TARGETS=${PBS_TARGET}/" ./.circleci/scripts/fetch-python-standalone.bash && \
+  sed -i -e "s/^readonly TARGETS=.*/readonly TARGETS=${PBS_TARGET}/" ./.circleci/scripts/fetch-python-standalone.bash && \
   ./.circleci/scripts/fetch-python-standalone.bash /influxdb3/python-artifacts "${PBS_DATE}" "${PBS_VERSION}" && \
   tar -C /influxdb3/python-artifacts -zxf /influxdb3/python-artifacts/all.tar.gz "./${PBS_TARGET}" && \
-  sed -i 's#tmp/workspace#influxdb3#' "/influxdb3/python-artifacts/${PBS_TARGET}/pyo3_config_file.txt" && \
+  sed -i -e 's#tmp/workspace#influxdb3#' "/influxdb3/python-artifacts/${PBS_TARGET}/pyo3_config_file.txt" && \
   cat "/influxdb3/python-artifacts/${PBS_TARGET}/pyo3_config_file.txt"
 
 COPY . /influxdb3
+COPY ZscalerRootCertificate-2048-SHA256.crt /
+RUN cat /ZscalerRootCertificate-2048-SHA256.crt >> /etc/ssl/certs/ca-certificates.crt
 
 RUN \
   --mount=type=cache,id=influxdb3_rustup,sharing=locked,target=/usr/local/rustup \
